@@ -10,7 +10,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import retrofit2.Call;
@@ -22,8 +26,9 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class MainActivity extends AppCompatActivity {
 
 //    private String BASEURL = "https://dummyjson.com/";
-    private String BASEURL = "https://dummyjson.com/";
+//    private String BASEURL = "https://dummyjson.com/";
     private TextView textView;
+    private UserViewModel userViewModel;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,10 +43,16 @@ public class MainActivity extends AppCompatActivity {
 
 
         //creating an instance of a retrofit object
-        Retrofit retrofit = new Retrofit.Builder()
+        /*
+        * Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(BASEURL)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
+                *
+                * this was before using MVVM
+        *
+        *
+
 
 
         textView = findViewById(R.id.textView);
@@ -70,6 +81,63 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this, "Failed", Toast.LENGTH_SHORT).show();
             }
         });
+
+         */
+
+        textView = findViewById(R.id.textView);
+
+        userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
+        //observing the live data for the user info
+        LiveData<List<UserInfo>> userLiveData = userViewModel.getUsers();
+
+        userLiveData.observe(this, new Observer<List<UserInfo>>() {
+            @Override
+            public void onChanged(List<UserInfo> userInfos) {
+                if (userInfos!=null){
+                    UserInfo users = userInfos.get(1);
+                    textView.setText(users.getFirstname());// 192.168.1.4
+                }
+
+            }
+        });
+
+        /*
+        * userLiveData.observe(this, new Observer<UserInfo>() {
+            @Override
+            public void onChanged(UserInfo infoResponse) {
+                if (infoResponse!=null){
+                    textView.setText(infoResponse.getFirstname());
+//                    StringBuilder userData = new StringBuilder();
+//                    for (int i = 0; i<userList.size(); i++){
+//                        UserInfo user = userList.get(i);
+//                        userData.append(user.getFirstName()).append("\n")
+//                                .append(user.getLastName()).append("\n")
+//                                .append(user.getEmail()).append("\n")
+//                                .append(user.getEmailVerifiedAt()).append("\n");
+
+//                    textView.setText(userData);
+
+                }else {
+                    textView.setText("not fetched");
+                }
+
+            }
+        });*/
+
+
+        LiveData<String> errorLiveData = userViewModel.getErrorMessage();
+        errorLiveData.observe(this, new Observer<String>() {
+            @Override
+            public void onChanged(String errorMessage) {
+                if (errorMessage != null) {
+
+                    // Display the error message
+                    textView.setText(errorMessage + "in case of faliure");
+                }
+            }
+        });
+        userViewModel.fetchUsers();
+
 
     }
 }
